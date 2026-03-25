@@ -1,7 +1,11 @@
 import { CheckCircle2, ImageIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import { useOutletContext } from "react-router";
-import { PROGRESS_INCREMENT, PROGRESS_INTERVAL_MS, REDIRECT_DELAY_MS } from "../lib/constants";
+import {
+  PROGRESS_INCREMENT,
+  PROGRESS_INTERVAL_MS,
+  REDIRECT_DELAY_MS,
+} from "../lib/constants";
 
 interface UploadProps {
   onComplete?: (base64Data: string) => void;
@@ -20,6 +24,10 @@ const Upload = ({ onComplete }: UploadProps) => {
     setProgress(0);
 
     const reader = new FileReader();
+    reader.onerror = () => {
+      setFile(null);
+      setProgress(0);
+    };
     reader.onload = (e) => {
       const base64Data = e.target?.result as string;
       const interval = setInterval(() => {
@@ -55,9 +63,11 @@ const Upload = ({ onComplete }: UploadProps) => {
     e.preventDefault();
     if (!isSignedIn) return;
     setIsDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processFile(e.dataTransfer.files[0]);
+
+    const droppedFile = e.dataTransfer.files[0];
+    const allowedTypes = ["image/jpeg", "image/png"];
+    if (droppedFile && allowedTypes.includes(droppedFile.type)) {
+      processFile(droppedFile);
     }
   };
 
@@ -71,7 +81,7 @@ const Upload = ({ onComplete }: UploadProps) => {
   return (
     <div className="upload">
       {!file ? (
-        <div 
+        <div
           className={`dropzone ${isDragging ? "is-dragging" : ""}`}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
